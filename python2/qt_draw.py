@@ -24,23 +24,30 @@ class config:
     prize_name = ["特等奖","一等奖","二等奖","三等奖","VIP专项"]
     # 默认设置为 三等奖
     prize_chose_default = 3
+
     prize_rejoin_default = 4
+
 
     # 抽奖人照片集
     person_photo_path = "2019_photo"
     
     # 测试目录
     test_path = "test_photo"
+
     unkown_photo = 'unkown.png'
 
     # 大标题名字    
     title_str = "xxxxx2019年会抽奖软件"
- 
+    
+    
     # 达到两排显示的个数
     show_two_line = 5
     show_x_zone = 0.95
     show_y_single_zone = 0.25
-      
+
+
+    
+    
     # line : 0 就一行 1：有两行，这是第一行，2：有两行，这是第二行
     # y start
     show_y_place_start = [0.2, 0.2, 0.5]
@@ -52,6 +59,9 @@ class config:
 
     show_x_y_ratio = 0.75
     show_y_size = [0.5, 0.25, 0.25]
+
+
+
 
 class Photo_class:
 
@@ -79,6 +89,10 @@ class Photo_class:
     def filter_name(self,filename):
         return filename.split('.')[0]
 
+    
+
+
+
 class prize_class:
 
     person_size = [182, 176]
@@ -105,9 +119,9 @@ class prize_class:
         self.set_window_size(w,h)
         self.photo = Photo_class()
         self.photo_dic = self.photo.photos
-        self.join_person = list(self.photo.photos.keys())
+        self.join_person = self.photo.photos.keys()
         self.VIP_person = copy.deepcopy(self.join_person)
-        print(self.join_person)
+        print self.join_person
         self.init_prize()
 
 
@@ -124,7 +138,9 @@ class prize_class:
         print("update window_size: ", self.window_size)
 
     def init_show(self):
-        self.show_list = [config.unkown_photo for _ in range(self.prize_num)]
+        self.show_list = []
+        for i in range(self.prize_num):
+            self.show_list.append(config.unkown_photo.decode('GB2312'))
         self.get_show_and_name_place()
         print("init:",self.prize_num, " show:", self.show_list)
 
@@ -136,7 +152,7 @@ class prize_class:
         new_start = config.show_x_place_start *  self.window_size[0]
 
         photo_new = self.person_size[0] / 2
-        for _ in range(number):
+        for i in range(number):
             center_place = new_start + (x_zone_sigle / 2)
             new_place = [(center_place - photo_new), config.show_y_place_start[line] *  self.window_size[1]]
             place_all.append(new_place)
@@ -152,6 +168,7 @@ class prize_class:
         size = self.photo_size_calc(0)
         x_zone_sigle = (config.show_x_zone *  self.window_size[0])
         new_start = config.show_x_place_start *  self.window_size[0]
+        new_place = 0.0
         photo_new = size[0] / 2
         center_place = new_start + (x_zone_sigle / 2)
         place_all = [(center_place - photo_new), config.show_y_place_start[0] *  self.window_size[1]]
@@ -172,7 +189,10 @@ class prize_class:
         return [x,y]
 
     def init_once_show_place(self):
-        self.once_show_place , self.once_name_place = self.calc_once_show_place()
+        show , name = self.calc_once_show_place()
+        self.once_show_place = show
+        self.once_name_place = name
+
 
 
     def get_show_and_name_place(self):
@@ -181,14 +201,17 @@ class prize_class:
         number = min(len(self.show_list), self.prize_num)
         if number >= config.show_two_line :
             self.person_size_recalc(1)
-            first_number = int(number / 2)
+            first_number = number / 2
             list1,name1 = self.calc_show_place(self.show_list[:first_number], 1)
             list2,name2 = self.calc_show_place(self.show_list[first_number:], 2)
             self.show_place = list1+list2
             self.name_place = name1+name2
+            
         else:
             self.person_size_recalc(0)  
             self.show_place, self.name_place = self.calc_show_place(self.show_list, 0)
+        #print(self.show_place )
+        #print(self.name_place )
 
     def add_hit_prize(self):
         self.show_list = []
@@ -196,20 +219,26 @@ class prize_class:
         random.shuffle(we_need_list)
         for i in range(self.prize_num):
             if len(we_need_list) <= i : break
-            self.show_list.append(self.photo.photos[we_need_list[i]])
+            self.show_list.append(self.photo.photos[we_need_list[i]].decode('GB2312'))
         if not self.show_list: return
         self.get_show_and_name_place()
+        #print("now show:", self.show_list)
 
     def getplace(self, place):
-        return [(float)(self.window_size[0]) * place[0], (float)(self.window_size[1]) * place[1]]
+        p_x =  (float)(self.window_size[0]) * place[0]
+        p_y =  (float)(self.window_size[1]) * place[1]
+        return [p_x, p_y]
 
     def get_person_list(self):
-        return self.VIP_person and self.VIP or self.join_person
+        if self.VIP == True:
+            return self.VIP_person
+        else:
+            return self.join_person
 
     def add_once_show_prize(self):
         we_need_list = self.get_person_list()
         random.shuffle(we_need_list)
-        return self.photo.photos[we_need_list[0]],0
+        return self.photo.photos[we_need_list[0]].decode('GB2312'),0
 
     def add_hit_prize_real(self):
         self.show_list = []
@@ -218,20 +247,27 @@ class prize_class:
         random.shuffle(we_need_list)
         for i in range(self.prize_num):
             if len(we_need_list) <= i : break
-            self.show_list.append(self.photo.photos[we_need_list[i]])
+            self.show_list.append(self.photo.photos[we_need_list[i]].decode('GB2312'))
             remove_index.append(we_need_list[i])
+            #self.join_person.remove(self.join_person[i])
         if not self.show_list: return
         self.get_show_and_name_place()
         print("now hit show:", self.show_list)
+        #for rm in remove_index:
+        #    we_need_list.remove(rm)
         return we_need_list, remove_index
 
     def set_new_prize(self, value):
-        self.VIP = True and value == config.prize_rejoin_default or False
+        self.VIP = False
+        if value == config.prize_rejoin_default:
+            self.VIP = True
         self.prize_num = config.prize_once_num[value]
         self.now_choice_prize = value
 
     def file_name_filter(self, filename):
-        return filename.replace('\\', '/').split('.')[0].split('/')[-1]
+        new = filename.replace('\\', '/')
+        res =  new.split('.')[0]
+        return res.split('/')[-1]
 
     def out_result_file(self, list):
         fp = open('hit_prize_list.txt', 'a+')
@@ -387,7 +423,7 @@ class MyApp(QWidget):
 
         label_ph = QLabel(self)
         #label_ph.setToolTip(name)
-        label_ph.setPalette(self.scale_image_once(config.unkown_photo))
+        label_ph.setPalette(self.scale_image_once(config.unkown_photo.decode('GB2312')))
         label_ph.setAlignment(Qt.AlignCenter)
         label_ph.setScaledContents(True)
         label_ph.setAutoFillBackground(True)
