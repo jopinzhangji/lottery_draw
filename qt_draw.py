@@ -355,10 +355,11 @@ class MyApp(QWidget):
         self.start_btn = QPushButton("PyQt5 Button", self)
         #self.start_btn = QAbstractButton("PyQt5 Button", self)
         self.start_btn.setText("长按开始第" + str(self.now_scroll_number + 1) + "个")
-        self.start_btn.setAutoRepeatDelay(0.01)
+        self.start_btn.setAutoRepeatDelay(0.001)
         self.start_btn.setAutoRepeat(True)
         #self.start_btn.setCheckable(True)
         self.start_btn.clicked.connect(self.btn_start_once)
+        self.start_btn.released.connect(self.btn_end_once)
         #self.start_btn.pressed.connect(self.btn_start)
         self.start_btn.released.connect(self.btn_hit_once)
         #self.start_btn.move(100, 70)
@@ -617,6 +618,18 @@ class MyApp(QWidget):
         else:
             self.show_photo_now()
 
+    def btn_end_once(self):
+        self.reshow_photo_show(False)
+
+        file, vale = self.prize.add_once_show_prize()
+        self.once_photo_show.setPalette(self.scale_image_once(file))
+        name = self.file_name_filter(file)
+        self.once_name_show.setText(name)
+
+        self.scroll_temp = [file, vale]
+
+        self.update()
+
     def btn_start_once(self):
 
         if not self.start_btn.isDown():
@@ -654,7 +667,7 @@ class MyApp(QWidget):
             self.show_photo(True)
             self.update()
             self.once_scroll_start = False
-        elif show_enable == False and self.once_scroll_start == False:
+        elif show_enable == False and self.once_scroll_start  == False:
             self.show_photo(False)
             self.once_photo_show.show()
             self.once_name_show.show()
