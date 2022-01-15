@@ -25,13 +25,14 @@ class config:
     # 默认设置为 三等奖
     prize_chose_default = 3
     prize_rejoin_default = 4
-
-    # 抽奖人照片集
-    person_photo_path = "2019_photo"
-    
+   
     # 测试目录
     test_path = "test_photo"
     unkown_photo = 'unkown.png'
+
+    # 抽奖人照片集
+    # person_photo_path = "2019_photo"
+    person_photo_path = test_path
 
     # 大标题名字    
     title_str = "xxxxx2019年会抽奖软件"
@@ -55,9 +56,11 @@ class config:
 
 class Photo_class:
 
+    show_once = {}
+
     def __init__(self):
         print('Photo')
-        self.find_photo('test_photo')
+        self.find_photo(config.person_photo_path)
 
 
     def read_from_file(self):
@@ -69,15 +72,17 @@ class Photo_class:
 
     def find_photo(self, path):
         self.photos = {}
+        self.show_once = {}
         for file in os.listdir(path):
             print(file)
             file_path = os.path.join(path, file)
             if os.path.isfile(file_path):
                 self.photos[self.filter_name(file)] = file_path
-
+                self.show_once[file_path] = None
 
     def filter_name(self,filename):
         return filename.split('.')[0]
+
 
 class prize_class:
 
@@ -211,6 +216,7 @@ class prize_class:
         random.shuffle(we_need_list)
         return self.photo.photos[we_need_list[0]],0
 
+
     def add_hit_prize_real(self):
         self.show_list = []
         remove_index = []
@@ -256,6 +262,12 @@ class prize_class:
         fp.close()
 
         now_list.remove(file)
+    
+    def everyone_onceshow_init(self, file, onceshow=None):
+        self.photo.show_once[file] = onceshow
+
+    def everyone_onceshow_find(self, file):
+        return self.photo.show_once[file]
 
 class MyApp(QWidget):
     
@@ -414,6 +426,8 @@ class MyApp(QWidget):
         self.once_photo_show.hide()
         self.once_name_show.hide()
 
+        self.init_onceshow()
+
 
     def btn_show(self):
         print("this is show start")
@@ -510,6 +524,20 @@ class MyApp(QWidget):
         for i in range(len(self.prize.show_list)):
             self.persons_lb.append(self.create_lable_photo(self.prize.show_list[i], '不知道是谁', i))
             self.names_lb.append(self.create_lable_name('不知道是谁', i))
+            self.persons_lb[i].hide()
+            self.names_lb[i].hide()
+        
+    def init_onceshow(self):
+        for photo_file in self.prize.photo.photos.keys():
+            file_path = self.prize.photo.photos[photo_file]
+            self.prize.everyone_onceshow_init(file_path,self.scale_image_once(file_path))
+    
+    def get_onceshow(self, photo_file):
+        onceshow = self.prize.everyone_onceshow_find(photo_file)
+        if onceshow == None:
+            onceshow = self.scale_image_once(photo_file)
+            self.prize.everyone_onceshow_init(photo_file, onceshow)
+        return onceshow
 
     def reset_show_photo(self):
         self.clear_photo()
@@ -518,8 +546,8 @@ class MyApp(QWidget):
         for i in range(len(self.prize.show_list)):
             self.persons_lb.append(self.create_lable_photo(self.prize.show_list[i], '不知道是谁', i))
             self.names_lb.append(self.create_lable_name('不知道是谁', i))
-            self.persons_lb[i].show()
-            self.names_lb[i].show()
+            # self.persons_lb[i].show()
+            # self.names_lb[i].show()
 
     def show_photo_now_no_create(self):
         time.sleep(0.02)
@@ -570,11 +598,11 @@ class MyApp(QWidget):
 
     def btn_hit_once(self):
 
-        time.sleep(0.1)
+        time.sleep(0.01)
         if self.start_btn.isDown():
             #print("--------still")
             return
-        print("**************")
+        print("*******btn_hit_once*******")
         if len(self.prize.join_person) == 0:
             self.show_no_person_msg()
             self.start_btn.setText("本次抽奖结束")
@@ -657,7 +685,6 @@ class MyApp(QWidget):
         self.once_name_show.setText(name)
 
         self.scroll_temp = [file, vale]
-
         self.update()
 
     def reshow_photo_show(self, show_enable):
@@ -674,18 +701,14 @@ class MyApp(QWidget):
             self.update()
             self.once_scroll_start = True
         #self.update()
-
+    
+    def persons_info_show(self, personinfos, enable):
+        for person_info in personinfos[:self.now_scroll_number]:
+            person_info.show() if enable else person_info.hide()
+            
     def show_photo(self, enable):
-        if enable:
-            for photo in self.persons_lb:
-                photo.show()
-            for name in self.names_lb:
-                name.show()
-        else:
-            for photo in self.persons_lb:
-                photo.hide()
-            for name in self.names_lb:
-                name.hide()
+        self.persons_info_show(self.persons_lb, enable)
+        self.persons_info_show(self.names_lb, enable)
 
 
     def chose_show(self):
@@ -726,6 +749,7 @@ class MyApp(QWidget):
             self.show_no_person_msg()
         #self.persons_lb = []
         for i in range(len(self.prize.show_list)):
+        # for i in range(len(now_scroll_number + 1)):
             name = self.file_name_filter(self.prize.show_list[i])
             self.persons_lb.append(self.create_lable_photo(self.prize.show_list[i], name, i))
             self.names_lb.append(self.create_lable_name(name, i))
@@ -738,7 +762,6 @@ class MyApp(QWidget):
         w_center = w.center()
         m.moveCenter(w_center)
         self.move(m.topLeft())
-
 
 def main():
     app = QApplication(sys.argv)
