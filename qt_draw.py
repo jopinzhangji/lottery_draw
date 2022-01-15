@@ -54,6 +54,9 @@ class config:
     show_x_y_ratio = 0.75
     show_y_size = [0.5, 0.25, 0.25]
 
+    # 照片滚动间隔
+    scroll_time = 0.01
+
 class Photo_class:
 
     show_once = {}
@@ -377,6 +380,7 @@ class MyApp(QWidget):
         #self.start_btn.move(100, 70)
         self.start_btn.setStyleSheet(self.btn_sty)
         self.start_btn.setFont(self.btn_font)
+        self.start_btn.setFocus()
 
 
         self.show_btn = QPushButton("PyQt5 Button2", self)
@@ -393,6 +397,9 @@ class MyApp(QWidget):
         #self.start_btn.move(100, 70)
         self.chose_btn.setStyleSheet(self.btn_sty)
         self.chose_btn.setFont(self.btn_font)
+
+        # self.setFocusPolicy(Qt.StrongFocus)
+        # self.clearFocus()
 
 
     def init_scroll_show(self):
@@ -430,18 +437,21 @@ class MyApp(QWidget):
 
 
     def btn_show(self):
-        print("this is show start")
+        # print("this is show start")
         if not self.show_history:
+            self.title_p_show.setText(None)
             self.show_now_hit_prize()
             self.show_history = True
             self.show_btn.setText("显示当前中奖")
         else:
+            self.title_p_show.setText(config.prize_name[self.prize.now_choice_prize])
             if self.show_lable:
                  self.show_lable.deleteLater()
                  self.show_lable = None
             self.show_photo(True)
             self.show_history = False
             self.show_btn.setText("显示历史中奖")
+            self.start_btn.setFocus()
 
     def create_prize_list_show(self):
         self.show_lable = QLabel(self)
@@ -576,7 +586,7 @@ class MyApp(QWidget):
 
 
     def btn_hit(self):
-        print("show the hit list...")
+        # print("show the hit list...")
         time.sleep(0.1)
         if self.start_btn.isDown():
             print("--------still")
@@ -597,10 +607,8 @@ class MyApp(QWidget):
             self.prize.out_result_file(rm_index_list)
 
     def btn_hit_once(self):
-
-        time.sleep(0.01)
+        time.sleep(config.scroll_time)
         if self.start_btn.isDown():
-            #print("--------still")
             return
         print("*******btn_hit_once*******")
         if len(self.prize.join_person) == 0:
@@ -610,7 +618,7 @@ class MyApp(QWidget):
 
         if not self.once_scroll_start:
             return
-        time.sleep(0.2)
+        time.sleep(0.01)
         res = QMessageBox.question(self, "抽奖完毕",   "请确认是否认同此次抽奖", QMessageBox.Yes | QMessageBox.No)
         if res== QMessageBox.Yes:
             self.add_to_hit_list(self.scroll_temp[0])
@@ -632,7 +640,7 @@ class MyApp(QWidget):
             
 
     def btn_start(self):
-        print("this is btn start")
+        # print("this is btn start")
         if not self.start_btn.isDown():
             print("--------out ")
             self.start_btn.setText("开始")
@@ -659,7 +667,6 @@ class MyApp(QWidget):
         self.update()
 
     def btn_start_once(self):
-
         if not self.start_btn.isDown():
             print("------scroll--out ")
             return
@@ -716,6 +723,7 @@ class MyApp(QWidget):
         value, ok = QInputDialog.getDouble(self, "请输入选择奖项", config.prize_show_value, self.prize.now_choice_prize, 0, len(config.prize_show_value), 0)
         print(int(value))
         if self.prize.now_choice_prize == int(value) and self.prize.prize_num != self.now_scroll_number:
+            self.start_btn.setFocus()
             return
         self.prize.set_new_prize(int(value))
         str_prize=config.prize_name[int(value)]
@@ -723,6 +731,7 @@ class MyApp(QWidget):
         self.reset_show_photo()
         self.now_scroll_number = 0
         self.start_btn.setText("长按开始第" + str(self.now_scroll_number + 1) + "个")
+        self.start_btn.setFocus()
 
 
     def clear_photo(self):
@@ -743,13 +752,10 @@ class MyApp(QWidget):
         QMessageBox.information(self, "!", "所有人都已经抽奖完")
 
     def show_photo_now(self):
-
         time.sleep(0.01)
         if not self.prize.show_list:
             self.show_no_person_msg()
-        #self.persons_lb = []
         for i in range(len(self.prize.show_list)):
-        # for i in range(len(now_scroll_number + 1)):
             name = self.file_name_filter(self.prize.show_list[i])
             self.persons_lb.append(self.create_lable_photo(self.prize.show_list[i], name, i))
             self.names_lb.append(self.create_lable_name(name, i))
@@ -762,6 +768,12 @@ class MyApp(QWidget):
         w_center = w.center()
         m.moveCenter(w_center)
         self.move(m.topLeft())
+    
+    def mouseReleaseEvent(self, mouseEvent):
+        # print("enter mouse ", mouseEvent.button())
+        if mouseEvent.button() == Qt.RightButton:
+            self.btn_show()
+  
 
 def main():
     app = QApplication(sys.argv)
